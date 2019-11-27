@@ -27,14 +27,42 @@ public class TableCreator {
             for (Field field : cl.getDeclaredFields()) {
                 String columnName = null;
                 Annotation[] annos = field.getDeclaredAnnotations();
-                if (annos.length<1) continue;
-                if (annos[0] instanceof SQLString){
+                if (annos.length < 1) continue;
+                if (annos[0] instanceof SQLInteger) {
+                    SQLInteger sInt = (SQLInteger) annos[0];
+                    if (sInt.name().length() < 1) {
+                        columnName = field.getName().toUpperCase();
+                    } else {
+                        columnName = sInt.name();
+                    }
+                    columnDefs.add(columnName + " INT" + getConstraints(sInt.constraints()));
 
                 }
-                if (annos[0] instanceof SQLInteger){
-
+                if (annos[0] instanceof SQLString) {
+                    SQLString sString = (SQLString) annos[0];
+                    if (sString.name().length() < 1)
+                        columnName = field.getName().toUpperCase();
+                    else
+                        columnName = sString.name();
+                    columnDefs.add(columnName + " VARCHAR(" + sString.value() + ")" + getConstraints(sString.constraints()));
                 }
+                StringBuilder createCommond=new StringBuilder(" CREATE TABLE "+tableName+"(");
+                for (String conumnDef:columnDefs)
+                    createCommond.append("\n "+conumnDef+",");
+                String tableCreate=createCommond.substring(0,createCommond.length()-1)+");";
+                System.out.println("Table Creation SQL for "+ className+" is:\n"+tableCreate);
             }
         }
+    }
+
+    public static String getConstraints(Constraints con) {
+        String constraints = "";
+        if (!con.allowNull())
+            constraints += " NOT NULL";
+        if (con.primaryKey())
+            constraints += " PRIMARY KEY";
+        if (con.unique())
+            constraints += " UNIQUE";
+        return constraints;
     }
 }
